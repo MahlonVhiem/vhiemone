@@ -1,0 +1,7 @@
+node_modules/
+.env
+
+.env.local
+private_key.pem
+private_key_pkcs8.pem
+public_key.pem
