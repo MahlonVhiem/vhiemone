@@ -10,13 +10,24 @@ export const createPost = mutation({
     photoId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
+    const clerkUserId = await getAuthUserId(ctx);
+    if (!clerkUserId) {
       throw new Error("Not authenticated");
     }
 
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found in Convex 'users' table.");
+    }
+
+    const convexUserId = user._id;
+
     const postId = await ctx.db.insert("posts", {
-      authorId: userId,
+      authorId: convexUserId,
       content: args.content,
       type: args.type,
       tags: args.tags,
@@ -29,7 +40,7 @@ export const createPost = mutation({
     // Award points for posting
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", convexUserId))
       .unique();
 
     if (profile) {
@@ -39,7 +50,7 @@ export const createPost = mutation({
       });
 
       await ctx.db.insert("pointTransactions", {
-        userId,
+        userId: convexUserId,
         points: pointsToAward,
         action: "post",
         description: `Posted a ${args.type} 📝`,
@@ -53,9 +64,17 @@ export const createPost = mutation({
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
+    const clerkUserId = await getAuthUserId(ctx);
+    if (!clerkUserId) {
       throw new Error("Not authenticated");
+    }
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found in Convex 'users' table.");
     }
     return await ctx.storage.generateUploadUrl();
   },
@@ -64,7 +83,18 @@ export const generateUploadUrl = mutation({
 export const getPosts = query({
   args: {},
   handler: async (ctx) => {
-    const currentUserId = await getAuthUserId(ctx);
+    const clerkUserId = await getAuthUserId(ctx);
+    let currentUserId = null;
+    if (clerkUserId) {
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+        .unique();
+      if (user) {
+        currentUserId = user._id;
+      }
+    }
+
     const posts = await ctx.db
       .query("posts")
       .order("desc")
@@ -115,8 +145,19 @@ export const getPostComments = query({
   args: {
     postId: v.id("posts"),
   },
-  handler: async (ctx, args) => {
-    const currentUserId = await getAuthUserId(ctx);
+  handler: async (ctx) => {
+    const clerkUserId = await getAuthUserId(ctx);
+    let currentUserId = null;
+    if (clerkUserId) {
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+        .unique();
+      if (user) {
+        currentUserId = user._id;
+      }
+    }
+
     const comments = await ctx.db
       .query("comments")
       .withIndex("by_post", (q) => q.eq("postId", args.postId))
@@ -226,15 +267,26 @@ export const likePost = mutation({
     postId: v.id("posts"),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
+    const clerkUserId = await getAuthUserId(ctx);
+    if (!clerkUserId) {
       throw new Error("Not authenticated");
     }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found in Convex 'users' table.");
+    }
+
+    const convexUserId = user._id;
 
     // Check if already liked
     const existingLike = await ctx.db
       .query("likes")
-      .withIndex("by_user_post", (q) => q.eq("userId", userId).eq("postId", args.postId))
+      .withIndex("by_user_post", (q) => q.eq("userId", convexUserId).eq("postId", args.postId))
       .unique();
 
     if (existingLike) {
@@ -251,7 +303,7 @@ export const likePost = mutation({
     } else {
       // Like
       await ctx.db.insert("likes", {
-        userId,
+        userId: convexUserId,
         postId: args.postId,
         type: "post",
       });
@@ -291,15 +343,26 @@ export const likeComment = mutation({
     commentId: v.id("comments"),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
+    const clerkUserId = await getAuthUserId(ctx);
+    if (!clerkUserId) {
       throw new Error("Not authenticated");
     }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found in Convex 'users' table.");
+    }
+
+    const convexUserId = user._id;
 
     // Check if already liked
     const existingLike = await ctx.db
       .query("likes")
-      .withIndex("by_user_comment", (q) => q.eq("userId", userId).eq("commentId", args.commentId))
+      .withIndex("by_user_comment", (q) => q.eq("userId", convexUserId).eq("commentId", args.commentId))
       .unique();
 
     if (existingLike) {
@@ -316,7 +379,7 @@ export const likeComment = mutation({
     } else {
       // Like
       await ctx.db.insert("likes", {
-        userId,
+        userId: convexUserId,
         commentId: args.commentId,
         type: "comment",
       });
@@ -358,14 +421,25 @@ export const addComment = mutation({
     mentionedUsers: v.optional(v.array(v.id("users"))),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
+    const clerkUserId = await getAuthUserId(ctx);
+    if (!clerkUserId) {
       throw new Error("Not authenticated");
     }
 
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found in Convex 'users' table.");
+    }
+
+    const convexUserId = user._id;
+
     const commentId = await ctx.db.insert("comments", {
       postId: args.postId,
-      authorId: userId,
+      authorId: convexUserId,
       content: args.content,
       likes: 0,
       mentionedUsers: args.mentionedUsers || [],
@@ -382,7 +456,7 @@ export const addComment = mutation({
     // Award points for commenting
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", convexUserId))
       .unique();
 
     if (profile) {
@@ -391,7 +465,7 @@ export const addComment = mutation({
       });
 
       await ctx.db.insert("pointTransactions", {
-        userId,
+        userId: convexUserId,
         points: 5,
         action: "comment",
         description: "Added a comment 💬",
@@ -409,22 +483,34 @@ export const addCommentReply = mutation({
     mentionedUsers: v.optional(v.array(v.id("users"))),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
+    const clerkUserId = await getAuthUserId(ctx);
+    if (!clerkUserId) {
       throw new Error("Not authenticated");
     }
 
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found in Convex 'users' table.");
+    }
+
+    const convexUserId = user._id;
+
     const replyId = await ctx.db.insert("commentReplies", {
       commentId: args.commentId,
-      authorId: userId,
+      authorId: convexUserId,
       content: args.content,
+      likes: 0,
       mentionedUsers: args.mentionedUsers || [],
     });
 
     // Award points for replying
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", convexUserId))
       .unique();
 
     if (profile) {
@@ -433,7 +519,7 @@ export const addCommentReply = mutation({
       });
 
       await ctx.db.insert("pointTransactions", {
-        userId,
+        userId: convexUserId,
         points: 5,
         action: "reply",
         description: "Replied to a comment 💬",
