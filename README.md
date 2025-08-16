@@ -1,9 +1,9 @@
-# Vhiem - Gamified Christian Social Platform
+# Vhiem - Gamified Christian Social Shopping Platform
   
 This is a project built with [Chef](https://chef.convex.dev) using [Convex](https://convex.dev) as its backend.
- You can find docs about Chef with useful information like how to deploy to production [here](https://docs.convex.dev/chef).
+ You can find docs about Chef with useful information like how to deploy to production [here]
   
-This project is connected to the Convex deployment named [`outgoing-heron-980`](https://dashboard.convex.dev/d/outgoing-heron-980).
+
   
 ## Project structure
   
@@ -14,8 +14,7 @@ The backend code is in the `convex` directory.
 `npm run dev` will start the frontend and backend servers.
 
 ## App authentication
-
-Chef apps use [Convex Auth](https://auth.convex.dev/) with Anonymous auth for easy sign in. You may wish to change this before deploying your app.
+ [Convex Auth](https://auth.convex.dev/) with Anonymous auth for easy sign in. You may wish to change this before deploying your app.
 
 ## Developing and deploying your app
 
