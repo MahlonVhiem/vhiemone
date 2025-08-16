@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const createProfile = mutation({
   args: {
@@ -9,24 +8,42 @@ export const createProfile = mutation({
     bio: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const clerkUserId = await getAuthUserId(ctx);
-    if (!clerkUserId) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
       throw new Error("Not authenticated");
     }
+    const clerkUserId = identity.subject;
 
-    // Find the Convex user ID using the Clerk user ID
-    const user = await ctx.db
+    let user = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
       .unique();
 
+    let convexUserId;
     if (!user) {
-      throw new Error("User not found in Convex 'users' table.");
+      const userId = await ctx.db.insert("users", {
+        clerkId: clerkUserId,
+        name: identity.name ?? "unknown user",
+        email: identity.email!,
+        profilePhoto: identity.profileUrl,
+        nickname: identity.nickname,
+        given_name: identity.givenName,
+        updated_at: Date.parse(identity.updatedAt!),
+        family_name: identity.familyName,
+        phone_number: identity.phoneNumber,
+        email_verified: identity.emailVerified,
+        phone_number_verified: identity.phoneNumberVerified,
+      });
+      user = await ctx.db.get(userId);
+      convexUserId = userId;
+    } else {
+      convexUserId = user._id;
     }
 
-    const convexUserId = user._id; // This is the Convex Id we need
+    if (!user) {
+      throw new Error("User not found and could not be created.");
+    }
 
-    // Check if profile already exists
     const existingProfile = await ctx.db
       .query("userProfiles")
       .withIndex("by_user", (q) => q.eq("userId", convexUserId))
@@ -47,9 +64,8 @@ export const createProfile = mutation({
       joinedAt: Date.now(),
     });
 
-    // Award welcome points
     await ctx.db.insert("pointTransactions", {
-      userId,
+      userId: convexUserId,
       points: 100,
       action: "welcome",
       description: "Welcome to Vhiem! 🙏",
@@ -62,21 +78,30 @@ export const createProfile = mutation({
 export const getUserProfile = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+    const clerkUserId = identity.subject;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!user) {
       return null;
     }
 
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
 
     if (!profile) {
       return null;
     }
 
-    // Get profile photo URL if it exists
     let profilePhotoUrl = null;
     if (profile.profilePhotoId) {
       profilePhotoUrl = await ctx.storage.getUrl(profile.profilePhotoId);
@@ -97,9 +122,8 @@ export const getLeaderboard = query({
       .order("desc")
       .take(10);
 
-    // Sort by points and add profile photos
     const sortedProfiles = profiles.sort((a, b) => b.points - a.points);
-    
+
     const profilesWithPhotos = await Promise.all(
       sortedProfiles.map(async (profile) => {
         let profilePhotoUrl = null;
@@ -124,21 +148,30 @@ export const awardPoints = mutation({
     description: v.string(),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
       throw new Error("Not authenticated");
+    }
+    const clerkUserId = identity.subject;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
     }
 
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
 
     if (!profile) {
       throw new Error("Profile not found");
     }
 
-    // Update points
     const newPoints = profile.points + args.points;
     const newLevel = Math.floor(newPoints / 1000) + 1;
 
@@ -147,9 +180,8 @@ export const awardPoints = mutation({
       level: newLevel,
     });
 
-    // Record transaction
     await ctx.db.insert("pointTransactions", {
-      userId,
+      userId: user._id,
       points: args.points,
       action: args.action,
       description: args.description,
@@ -164,29 +196,38 @@ export const followUser = mutation({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const currentUserId = await getAuthUserId(ctx);
-    if (!currentUserId) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
       throw new Error("Not authenticated");
     }
+    const clerkUserId = identity.subject;
 
-    if (currentUserId === args.userId) {
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!currentUser) {
+      throw new Error("Current user not found");
+    }
+
+    if (currentUser._id === args.userId) {
       throw new Error("Cannot follow yourself");
     }
 
-    // Check if already following
     const existingFollow = await ctx.db
       .query("follows")
-      .withIndex("by_follower_following", (q) => 
-        q.eq("followerId", currentUserId).eq("followingId", args.userId)
+      .withIndex("by_follower_following", (q) =>
+        q.eq("followerId", currentUser._id).eq("followingId", args.userId)
       )
       .unique();
 
     if (existingFollow) {
-      return false; // Already following, return false instead of throwing
+      return false;
     }
 
     await ctx.db.insert("follows", {
-      followerId: currentUserId,
+      followerId: currentUser._id,
       followingId: args.userId,
     });
 
@@ -199,20 +240,30 @@ export const unfollowUser = mutation({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const currentUserId = await getAuthUserId(ctx);
-    if (!currentUserId) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
       throw new Error("Not authenticated");
+    }
+    const clerkUserId = identity.subject;
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!currentUser) {
+      throw new Error("Current user not found");
     }
 
     const existingFollow = await ctx.db
       .query("follows")
-      .withIndex("by_follower_following", (q) => 
-        q.eq("followerId", currentUserId).eq("followingId", args.userId)
+      .withIndex("by_follower_following", (q) =>
+        q.eq("followerId", currentUser._id).eq("followingId", args.userId)
       )
       .unique();
 
     if (!existingFollow) {
-      return false; // Not following, return false instead of throwing
+      return false;
     }
 
     await ctx.db.delete(existingFollow._id);
@@ -242,7 +293,7 @@ export const isFollowing = query({
 
     const existingFollow = await ctx.db
       .query("follows")
-      .withIndex("by_follower_following", (q) => 
+      .withIndex("by_follower_following", (q) =>
         q.eq("followerId", currentUser._id).eq("followingId", args.userId)
       )
       .unique();
@@ -287,10 +338,7 @@ export const getAllUsers = query({
         .unique();
     }
 
-    const profiles = await ctx.db
-      .query("userProfiles")
-      .order("desc")
-      .take(50);
+    const profiles = await ctx.db.query("userProfiles").order("desc").take(50);
 
     const usersWithFollowStatus = await Promise.all(
       profiles.map(async (profile) => {
@@ -298,14 +346,13 @@ export const getAllUsers = query({
         if (currentUser && currentUser._id !== profile.userId) {
           const followRecord = await ctx.db
             .query("follows")
-            .withIndex("by_follower_following", (q) => 
-              q.eq("followerId", currentUser._id).eq("followingId", profile.userId)
+            .withIndex("by_follower_following", (q) =>
+              q.eq("followerId", currentUser!._id).eq("followingId", profile.userId)
             )
             .unique();
           isFollowing = !!followRecord;
         }
 
-        // Get profile photo URL if it exists
         let profilePhotoUrl = null;
         if (profile.profilePhotoId) {
           profilePhotoUrl = await ctx.storage.getUrl(profile.profilePhotoId);
