@@ -21,7 +21,7 @@ export const createProfile = mutation({
 
     let convexUserId;
     if (!user) {
-      const userId = await ctx.db.insert("users", {
+      convexUserId = await ctx.db.insert("users", {
         clerkId: clerkUserId,
         name: identity.name ?? "unknown user",
         email: identity.email!,
@@ -34,8 +34,7 @@ export const createProfile = mutation({
         email_verified: identity.emailVerified,
         phone_number_verified: identity.phoneNumberVerified,
       });
-      user = await ctx.db.get(userId);
-      convexUserId = userId;
+      user = await ctx.db.get(convexUserId);
     } else {
       convexUserId = user._id;
     }
