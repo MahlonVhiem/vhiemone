@@ -145,7 +145,7 @@ export const getPostComments = query({
   args: {
     postId: v.id("posts"),
   },
-  handler: async (ctx) => {
+  handler: async (ctx, args) => {
     const clerkUserId = await getAuthUserId(ctx);
     let currentUserId = null;
     if (clerkUserId) {
@@ -503,7 +503,6 @@ export const addCommentReply = mutation({
       commentId: args.commentId,
       authorId: convexUserId,
       content: args.content,
-      likes: 0,
       mentionedUsers: args.mentionedUsers || [],
     });
 
