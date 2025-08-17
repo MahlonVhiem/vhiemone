@@ -8,9 +8,6 @@ import { LandingPage } from "./components/LandingPage";
 import {
   SignedIn,
   SignedOut,
-  SignInButton,
-  SignUpButton,
-  UserButton,
   SignIn,
   SignUp,
 } from "@clerk/clerk-react";
@@ -106,3 +103,34 @@ export default function App() {
           <Toaster />
         </div>
       </div>
+    </Router>
+  );
+}
+
+function RoleSelectionRoute() {
+  const userProfile = useQuery(api.users.getUserProfile);
+
+  if (userProfile === undefined) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-yellow-400 border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  return !userProfile ? <RoleSelection /> : <Navigate to="/dashboard" replace />;
+}
+
+function DashboardRoute() {
+  const userProfile = useQuery(api.users.getUserProfile);
+
+  if (userProfile === undefined) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-yellow-400 border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  return userProfile ? <Dashboard /> : <Navigate to="/setup" replace />;
+}
