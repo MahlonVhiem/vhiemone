@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { PostCreator } from "./PostCreator";
@@ -17,6 +18,7 @@ export function Dashboard() {
   const [showProfileView, setShowProfileView] = useState<string | null>(null);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const userProfile = useQuery(api.users.getUserProfile);
+  const navigate = useNavigate();
 
   const tabs = [
     { id: "feed" as const, label: "Feed", icon: "🏠" },

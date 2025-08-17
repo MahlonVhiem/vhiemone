@@ -1,13 +1,7 @@
-import { useState } from "react";
-import { SignInForm } from "../SignInForm";
+import { Link } from "react-router-dom";
+import { SignedIn, SignedOut } from "@clerk/clerk-react";
 
-interface LandingPageProps {
-  onRoleSelect: (role: "shopper" | "business" | "delivery_driver") => void;
-}
-
-export function LandingPage({ onRoleSelect }: LandingPageProps) {
-  const [selectedRole, setSelectedRole] = useState<"shopper" | "business" | "delivery_driver" | null>(null);
-
+export function LandingPage() {
   const roles = [
     {
       id: "shopper" as const,
@@ -50,51 +44,28 @@ export function LandingPage({ onRoleSelect }: LandingPageProps) {
     }
   ];
 
-  const selectedRoleData = roles.find(role => role.id === selectedRole);
-
-  if (selectedRole) {
-    return (
-      <div className="animate-fade-in">
-        <div className="text-center mb-8">
-          <button
-            onClick={() => setSelectedRole(null)}
-            className="mb-6 text-white/80 hover:text-white flex items-center space-x-2 mx-auto transition-colors group"
-          >
-            <span className="group-hover:-translate-x-1 transition-transform">←</span>
-            <span>Back to role selection</span>
-          </button>
-          
-          {/* Selected Role Header */}
-          <div className={`inline-flex items-center space-x-4 bg-gradient-to-r ${selectedRoleData?.gradient} px-6 py-3 rounded-2xl text-white mb-6`}>
-            <span className="text-3xl">{selectedRoleData?.icon}</span>
-            <div className="text-left">
-              <h3 className="text-xl font-bold">Join as {selectedRoleData?.title}</h3>
-              <p className="text-white/90 text-sm">Create your account below</p>
-            </div>
-          </div>
-          
-          <h2 className="text-4xl font-bold bg-gradient-to-r from-yellow-400 via-green-400 to-blue-400 bg-clip-text text-transparent mb-4">
-            Welcome to Vhiem
-          </h2>
-          <p className="text-lg text-white/80 mb-8 max-w-md mx-auto">
-            {selectedRoleData?.description}
-          </p>
-        </div>
-        
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 max-w-md mx-auto">
-          <SignInForm />
-          <div className="mt-4 text-center">
-            <p className="text-white/60 text-sm">
-              After signing in, you'll complete your {selectedRoleData?.title} profile
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="animate-fade-in">
+      {/* Show different content based on auth state */}
+      <SignedIn>
+        <div className="text-center mb-8">
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-yellow-400 via-green-400 to-blue-400 bg-clip-text text-transparent mb-4">
+            Welcome back to Vhiem!
+          </h2>
+          <p className="text-lg text-white/80 mb-8">
+            Continue your faith journey in the community
+          </p>
+          <Link 
+            to="/dashboard"
+            className="inline-flex items-center space-x-2 px-8 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold rounded-xl hover:from-yellow-500 hover:to-orange-600 transition-all duration-300 transform hover:scale-105"
+          >
+            <span>Go to Dashboard</span>
+            <span>→</span>
+          </Link>
+        </div>
+      </SignedIn>
+
+      <SignedOut>
       {/* Hero Section */}
       <div className="text-center mb-12">
         <h2 className="text-6xl font-bold bg-gradient-to-r from-yellow-400 via-green-400 to-blue-400 bg-clip-text text-transparent mb-6">
@@ -118,13 +89,9 @@ export function LandingPage({ onRoleSelect }: LandingPageProps) {
           {roles.map((role) => (
             <div
               key={role.id}
-              onClick={() => {
-                setSelectedRole(role.id);
-                onRoleSelect(role.id);
-                localStorage.setItem('vhiem-preselected-role', role.id);
-              }}
               className="group cursor-pointer transition-all duration-500 transform hover:scale-105 hover:-translate-y-2"
             >
+              <Link to="/signup" onClick={() => localStorage.setItem('vhiem-preselected-role', role.id)}>
               <div className={`bg-gradient-to-br ${role.gradient} p-8 rounded-2xl text-white h-full relative overflow-hidden border-2 border-transparent hover:border-yellow-400/50 transition-all duration-300`}>
                 {/* Background decoration */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-500"></div>
@@ -156,6 +123,7 @@ export function LandingPage({ onRoleSelect }: LandingPageProps) {
                   </div>
                 </div>
               </div>
+              </Link>
             </div>
           ))}
         </div>
@@ -193,16 +161,17 @@ export function LandingPage({ onRoleSelect }: LandingPageProps) {
       {/* Alternative CTA */}
       <div className="text-center">
         <p className="text-white/60 text-lg mb-4">
-          Or browse all options first
+          Ready to get started?
         </p>
-        <button
-          onClick={() => setSelectedRole("shopper")}
+        <Link
+          to="/signup"
           className="inline-flex items-center space-x-3 py-3 px-6 bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium rounded-xl hover:bg-white/20 transition-all duration-300"
         >
           <span>👆</span>
-          <span>Click any card above to get started</span>
-        </button>
+          <span>Join the Community</span>
+        </Link>
       </div>
+      </SignedOut>
     </div>
   );
 }

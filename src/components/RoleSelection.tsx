@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
@@ -14,6 +15,7 @@ export function RoleSelection({ preSelectedRole }: RoleSelectionProps) {
   const [isLoading, setIsLoading] = useState(false);
   
   const createProfile = useMutation(api.users.createProfile);
+  const navigate = useNavigate();
 
   // Set the pre-selected role when component mounts
   useEffect(() => {
@@ -58,6 +60,7 @@ export function RoleSelection({ preSelectedRole }: RoleSelectionProps) {
         bio: bio.trim() || undefined,
       });
       toast.success("Welcome to Vhiem! You've earned 100 points! 🎉");
+      navigate("/dashboard");
     } catch (error) {
       toast.error("Failed to create profile. Please try again.");
       console.error(error);
