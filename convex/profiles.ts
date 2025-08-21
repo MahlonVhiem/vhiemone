@@ -5,14 +5,23 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 export const getCurrentUserProfile = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
+    const clerkUserId = await getAuthUserId(ctx);
+    if (!clerkUserId) {
+      return null;
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!user) {
       return null;
     }
 
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
 
     if (!profile) {
@@ -50,14 +59,23 @@ export const updateProfile = mutation({
     favoriteVerses: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
+    const clerkUserId = await getAuthUserId(ctx);
+    if (!clerkUserId) {
       throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
     }
 
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
 
     if (!profile) {
@@ -77,8 +95,8 @@ export const updateProfile = mutation({
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
+    const clerkUserId = await getAuthUserId(ctx);
+    if (!clerkUserId) {
       throw new Error("Not authenticated");
     }
     return await ctx.storage.generateUploadUrl();
@@ -90,14 +108,23 @@ export const updateProfilePhoto = mutation({
     storageId: v.id("_storage"),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
+    const clerkUserId = await getAuthUserId(ctx);
+    if (!clerkUserId) {
       throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
     }
 
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
 
     if (!profile) {
@@ -120,14 +147,23 @@ export const updateProfilePhoto = mutation({
 export const removeProfilePhoto = mutation({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
+    const clerkUserId = await getAuthUserId(ctx);
+    if (!clerkUserId) {
       throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
     }
 
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
 
     if (!profile) {
@@ -179,12 +215,23 @@ export const getProfileById = query({
       .collect();
 
     // Check if current user is following this profile
-    const currentUserId = await getAuthUserId(ctx);
+    const currentUserClerkId = await getAuthUserId(ctx);
+    let currentUserId = null;
+    if (currentUserClerkId) {
+      const currentUser = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", currentUserClerkId))
+        .unique();
+      if (currentUser) {
+        currentUserId = currentUser._id;
+      }
+    }
+
     let isFollowing = false;
     if (currentUserId && currentUserId !== args.userId) {
       const followRecord = await ctx.db
         .query("follows")
-        .withIndex("by_follower_following", (q) => 
+        .withIndex("by_follower_following", (q) =>
           q.eq("followerId", currentUserId).eq("followingId", args.userId)
         )
         .unique();
