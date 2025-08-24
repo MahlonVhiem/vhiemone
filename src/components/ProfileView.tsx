@@ -147,10 +147,10 @@ export function ProfileView({ userId, onClose }: ProfileViewProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 max-w-2xl w-full max-h-[90vh] overflow-y-auto mx-2 sm:mx-auto">
         {/* Header */}
-        <div className="flex justify-between items-start mb-6">
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-center sm:text-left">
             <div className="w-16 h-16 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center overflow-hidden">
               {profile.profilePhotoUrl ? (
                 <img 
@@ -167,7 +167,7 @@ export function ProfileView({ userId, onClose }: ProfileViewProps) {
             <div>
               <h2 className="text-2xl font-bold text-white">{profile.displayName}</h2>
               <p className="text-white/80 capitalize">{profile.role.replace('_', ' ')}</p>
-              <div className="flex items-center space-x-4 text-sm text-white/60 mt-1">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-sm text-white/60 mt-2 sm:mt-1">
                 <span>{profile.followerCount} followers</span>
                 <span>{profile.followingCount} following</span>
                 <span>Level {profile.level}</span>
@@ -176,7 +176,7 @@ export function ProfileView({ userId, onClose }: ProfileViewProps) {
           </div>
           <button
             onClick={onClose}
-            className="text-white/60 hover:text-white text-2xl"
+            className="absolute top-4 right-4 text-white/60 hover:text-white text-2xl"
           >
             ×
           </button>
@@ -199,7 +199,7 @@ export function ProfileView({ userId, onClose }: ProfileViewProps) {
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-4 rounded-xl text-white text-center">
             <div className="text-xl font-bold">{profile.points}</div>
             <div className="text-xs text-white/80">Points</div>

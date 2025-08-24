@@ -258,8 +258,8 @@ function PostItem({
   return (
     <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 animate-slide-up">
       {/* Post Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 text-center sm:text-left">
           <ClickableProfilePicture
             userId={post.authorProfile?.userId}
             profilePhotoUrl={post.authorProfile?.profilePhotoUrl}
@@ -287,7 +287,7 @@ function PostItem({
             </button>
           )}
         </div>
-        <div className={`px-3 py-1 rounded-full bg-gradient-to-r ${getPostTypeStyle(post.type)} text-white text-sm font-medium flex items-center space-x-1`}>
+        <div className={`px-3 py-1 rounded-full bg-gradient-to-r ${getPostTypeStyle(post.type)} text-white text-sm font-medium flex items-center space-x-1 mt-2 sm:mt-0 self-end sm:self-auto`}>
           <span>{getPostTypeIcon(post.type)}</span>
           <span className="capitalize">{post.type}</span>
         </div>
@@ -324,7 +324,7 @@ function PostItem({
       )}
 
       {/* Post Actions */}
-      <div className="flex items-center justify-between border-t border-white/20 pt-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 border-t border-white/20 pt-4">
         <div className="flex items-center space-x-4">
           <button
             onClick={onLike}
@@ -348,7 +348,7 @@ function PostItem({
           </button>
         </div>
         
-        <div className="text-white/60 text-sm">
+        <div className="text-white/60 text-sm text-center sm:text-right">
           {new Date(post._creationTime).toLocaleDateString()}
         </div>
       </div>
@@ -361,7 +361,7 @@ function PostItem({
             <div className="space-y-4 mb-4">
               {comments.map((comment) => (
                 <div key={comment._id} className="space-y-3">
-                  <div className="flex space-x-3">
+                  <div className="flex flex-col sm:flex-row sm:space-x-3">
                     <ClickableProfilePicture
                       userId={comment.authorProfile?.userId}
                       profilePhotoUrl={comment.authorProfile?.profilePhotoUrl}
@@ -408,7 +408,7 @@ function PostItem({
 
                   {/* Replies */}
                   {comment.replies && comment.replies.length > 0 && (
-                    <div className="ml-8 space-y-2">
+                    <div className="ml-4 sm:ml-8 space-y-2">
                       {comment.replies.map((reply: any) => (
                         <div key={reply._id} className="flex space-x-2">
                           <ClickableProfilePicture
@@ -441,18 +441,18 @@ function PostItem({
 
                   {/* Reply Input */}
                   {showReplies[comment._id] && (
-                    <div className="ml-8 flex space-x-2">
+                    <div className="ml-4 sm:ml-8 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                       <UserMentionInput
                         value={replyInputs[comment._id] || ""}
                         onChange={(value) => onReplyInputChange(comment._id, value)}
                         onMentionedUsersChange={(users) => onMentionedUsersChange(`reply-${comment._id}`, users)}
-                        className="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-sm"
+                        className="w-full sm:w-auto px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-sm"
                         placeholder="Reply with @username to mention..."
                         onKeyPress={(e) => e.key === "Enter" && onReply(comment._id)}
                       />
                       <button
                         onClick={() => onReply(comment._id)}
-                        className="px-3 py-2 bg-gradient-to-r from-blue-400 to-blue-600 text-white font-medium rounded-lg hover:from-blue-500 hover:to-blue-700 transition-all duration-300 text-sm"
+                        className="w-full sm:w-auto px-3 py-2 bg-gradient-to-r from-blue-400 to-blue-600 text-white font-medium rounded-lg hover:from-blue-500 hover:to-blue-700 transition-all duration-300 text-sm"
                       >
                         Reply
                       </button>
@@ -464,18 +464,18 @@ function PostItem({
           )}
 
           {/* Add Comment */}
-          <div className="flex space-x-3">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
             <UserMentionInput
               value={commentInput}
               onChange={onCommentInputChange}
               onMentionedUsersChange={(users) => onMentionedUsersChange(`comment-${post._id}`, users)}
-              className="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              className="w-full sm:w-auto px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400"
               placeholder="Add a comment... Use @username to mention someone"
               onKeyPress={(e) => e.key === "Enter" && onComment()}
             />
             <button
               onClick={onComment}
-              className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-medium rounded-lg hover:from-yellow-500 hover:to-orange-600 transition-all duration-300"
+              className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-medium rounded-lg hover:from-yellow-500 hover:to-orange-600 transition-all duration-300"
             >
               Post
             </button>

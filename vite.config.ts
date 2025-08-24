@@ -7,6 +7,9 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
   ],
+  css: {
+    postcss: './postcss.config.cjs',
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

@@ -68,7 +68,7 @@ export function LandingPage() {
       <SignedOut>
       {/* Hero Section */}
       <div className="text-center mb-12">
-        <h2 className="text-6xl font-bold bg-gradient-to-r from-yellow-400 via-green-400 to-blue-400 bg-clip-text text-transparent mb-6">
+        <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-r from-yellow-400 via-green-400 to-blue-400 bg-clip-text text-transparent mb-6">
           Welcome to Vhiem
         </h2>
         <p className="text-2xl text-white/90 mb-4">

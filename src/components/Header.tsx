@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import VhiemLogo from './VhiemLogo';
 import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 
 export function Header() {
   const location = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 bg-white/10 backdrop-blur-md border-b border-white/20">
@@ -15,7 +17,7 @@ export function Header() {
           </h1>
         </Link>
         
-        <nav className="flex items-center space-x-4">
+        <nav className="hidden md:flex items-center space-x-4">
           <SignedIn>
             <Link 
               to="/dashboard" 
@@ -62,6 +64,98 @@ export function Header() {
             </div>
           </SignedOut>
         </nav>
+
+        {/* Mobile menu button */}
+        <div className="md:hidden flex items-center">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="text-white focus:outline-none p-2 rounded-md bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 transition-all duration-300"
+          >
+            {isOpen ? (
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            ) : (
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                ></path>
+              </svg>
+            )}
+          </button>
+        </div>
+
+        {/* Mobile menu */}
+        {isOpen && (
+          <div className="md:hidden fixed inset-0 bg-black/80 backdrop-blur-lg z-40 flex flex-col items-center justify-center space-y-8 animate-fade-in">
+            <button
+              onClick={() => setIsOpen(false)}
+              className="absolute top-4 right-4 text-white text-4xl focus:outline-none"
+            >
+              &times;
+            </button>
+            <SignedIn>
+              <Link 
+                to="/dashboard" 
+                className={`text-white text-2xl font-bold hover:text-yellow-400 transition-colors ${
+                  location.pathname === '/dashboard' ? 'text-yellow-400' : ''
+                }`}
+                onClick={() => setIsOpen(false)}
+              >
+                Dashboard
+              </Link>
+              <UserButton 
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    avatarBox: "w-12 h-12"
+                  }
+                }}
+              />
+            </SignedIn>
+            
+            <SignedOut>
+              <Link 
+                to="/signin"
+                className={`text-white text-2xl font-bold hover:text-blue-400 transition-colors ${
+                  location.pathname === '/signin' ? 'text-blue-400' : ''
+                }`}
+                onClick={() => setIsOpen(false)}
+              >
+                Sign In
+              </Link>
+              <Link 
+                to="/signup"
+                className={`text-white text-2xl font-bold hover:text-green-400 transition-colors ${
+                  location.pathname === '/signup' ? 'text-green-400' : ''
+                }`}
+                onClick={() => setIsOpen(false)}
+              >
+                Sign Up
+              </Link>
+            </SignedOut>
+          </div>
+        )}
       </div>
     </header>
   );

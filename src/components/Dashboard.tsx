@@ -41,7 +41,7 @@ export function Dashboard() {
     <div className="animate-fade-in">
       {/* Welcome Header */}
       <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 mb-6 border border-white/20">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div className="flex items-center space-x-4">
             <ProfilePhotoUpload
               currentPhotoUrl={userProfile.profilePhotoUrl}
@@ -57,15 +57,15 @@ export function Dashboard() {
               </p>
             </div>
           </div>
-          <div className="text-right">
-            <div className="flex items-center space-x-3">
+          <div className="text-center md:text-right mt-4 md:mt-0">
+            <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-end space-y-2 sm:space-y-0 sm:space-x-3">
               <button
                 onClick={() => setShowProfileEdit(true)}
-                className="px-3 py-1 bg-white/20 text-white text-sm rounded hover:bg-white/30 transition-colors"
+                className="px-3 py-1 bg-white/20 text-white text-sm rounded hover:bg-white/30 transition-colors w-full sm:w-auto"
               >
                 Edit Profile
               </button>
-              <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-4 py-2 rounded-full font-bold">
+              <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-4 py-2 rounded-full font-bold w-full sm:w-auto text-center">
                 {userProfile.points} Points
               </div>
             </div>
@@ -78,12 +78,12 @@ export function Dashboard() {
 
       {/* Navigation Tabs */}
       <div className="bg-white/10 backdrop-blur-md rounded-2xl p-2 mb-6 border border-white/20">
-        <div className="flex space-x-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:space-x-2 gap-2">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-xl transition-all duration-300 ${
+              className={`w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl transition-all duration-300 ${
                 activeTab === tab.id
                   ? "bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold"
                   : "text-white/80 hover:bg-white/10"

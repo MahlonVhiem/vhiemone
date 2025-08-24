@@ -61,7 +61,7 @@ export function PeopleDirectory({ onProfileClick }: PeopleDirectoryProps) {
               key={user._id}
               className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 hover:bg-white/20 transition-all duration-300"
             >
-              <div className="flex items-center space-x-3 mb-3">
+              <div className="flex flex-col sm:flex-row items-center sm:space-x-3 mb-3">
                 <ClickableProfilePicture
                   userId={user.userId}
                   profilePhotoUrl={user.profilePhotoUrl}
@@ -69,7 +69,7 @@ export function PeopleDirectory({ onProfileClick }: PeopleDirectoryProps) {
                   size="lg"
                   onClick={onProfileClick}
                 />
-                <div className="flex-1">
+                <div className="flex-1 text-center sm:text-left mt-2 sm:mt-0">
                   <div className="font-bold text-white">{user.displayName}</div>
                   <div className="text-white/60 text-sm capitalize">
                     {user.role.replace('_', ' ')} • Level {user.level}
