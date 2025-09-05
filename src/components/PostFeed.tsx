@@ -4,6 +4,9 @@ import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { ClickableProfilePicture } from "./ClickableProfilePicture";
 import { UserMentionInput } from "./UserMentionInput";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
+
 
 interface PostFeedProps {
   onProfileClick?: (userId: string) => void;
@@ -25,6 +28,8 @@ export function PostFeed({ onProfileClick }: PostFeedProps) {
   const [followingStates, setFollowingStates] = useState<Record<string, boolean>>({});
   const [mentionedUsers, setMentionedUsers] = useState<Record<string, string[]>>({});
   const [expandedPosts, setExpandedPosts] = useState<Record<string, boolean>>({});
+  const [open, setOpen] = useState(false);
+  const [index, setIndex] = useState(0);
 
   const handleLike = async (postId: string) => {
     try {
@@ -54,8 +59,8 @@ export function PostFeed({ onProfileClick }: PostFeedProps) {
         content,
         mentionedUsers: mentionedUsers[`comment-${postId}`] as any
       });
-      setCommentInputs(prev => ({ ...prev, [postId]: "" }));
-      setMentionedUsers(prev => ({ ...prev, [`comment-${postId}`]: [] }));
+      setCommentInputs((prev: Record<string, string>) => ({ ...prev, [postId]: "" }));
+      setMentionedUsers((prev: Record<string, string[]>) => ({ ...prev, [`comment-${postId}`]: [] }));
       toast.success("Comment added! +5 points! 💬");
     } catch (error) {
       toast.error("Failed to add comment");
@@ -72,8 +77,8 @@ export function PostFeed({ onProfileClick }: PostFeedProps) {
         content,
         mentionedUsers: mentionedUsers[`reply-${commentId}`] as any
       });
-      setReplyInputs(prev => ({ ...prev, [commentId]: "" }));
-      setMentionedUsers(prev => ({ ...prev, [`reply-${commentId}`]: [] }));
+      setReplyInputs((prev: Record<string, string>) => ({ ...prev, [commentId]: "" }));
+      setMentionedUsers((prev: Record<string, string[]>) => ({ ...prev, [`reply-${commentId}`]: [] }));
       toast.success("Reply added! +5 points! 💬");
     } catch (error) {
       toast.error("Failed to add reply");
@@ -85,13 +90,13 @@ export function PostFeed({ onProfileClick }: PostFeedProps) {
       if (isCurrentlyFollowing) {
         const result = await unfollowUser({ userId: userId as any });
         if (result) {
-          setFollowingStates(prev => ({ ...prev, [userId]: false }));
+          setFollowingStates((prev: Record<string, boolean>) => ({ ...prev, [userId]: false }));
           toast.success("Unfollowed user");
         }
       } else {
         const result = await followUser({ userId: userId as any });
         if (result) {
-          setFollowingStates(prev => ({ ...prev, [userId]: true }));
+          setFollowingStates((prev: Record<string, boolean>) => ({ ...prev, [userId]: true }));
           toast.success("Following user! 🎉");
         }
       }
@@ -128,7 +133,7 @@ export function PostFeed({ onProfileClick }: PostFeedProps) {
     const isLong = content.length > 250;
 
     const toggleExpanded = () => {
-      setExpandedPosts(prev => ({ ...prev, [postId]: !isExpanded }));
+      setExpandedPosts((prev: Record<string, boolean>) => ({ ...prev, [postId]: !isExpanded }));
     };
 
     const renderText = () => {
@@ -178,7 +183,7 @@ export function PostFeed({ onProfileClick }: PostFeedProps) {
           <p className="text-white/80">Be the first to share something with the community!</p>
         </div>
       ) : (
-        posts.map((post) => (
+        posts.map((post, idx) => (
           <PostItem
             key={post._id}
             post={post}
@@ -191,19 +196,29 @@ export function PostFeed({ onProfileClick }: PostFeedProps) {
             onCommentLike={handleCommentLike}
             onComment={() => handleComment(post._id)}
             onReply={handleReply}
-            onToggleComments={() => setShowComments(prev => ({ ...prev, [post._id]: !prev[post._id] }))}
-            onToggleReplies={(commentId: string) => setShowReplies(prev => ({ ...prev, [commentId]: !prev[commentId] }))}
-            onCommentInputChange={(value) => setCommentInputs(prev => ({ ...prev, [post._id]: value }))}
-            onReplyInputChange={(commentId: string, value: string) => setReplyInputs(prev => ({ ...prev, [commentId]: value }))}
-            onMentionedUsersChange={(key: string, users: string[]) => setMentionedUsers(prev => ({ ...prev, [key]: users }))}
+            onToggleComments={() => setShowComments((prev: Record<string, boolean>) => ({ ...prev, [post._id]: !prev[post._id] }))}
+            onToggleReplies={(commentId: string) => setShowReplies((prev: Record<string, boolean>) => ({ ...prev, [commentId]: !prev[commentId] }))}
+            onCommentInputChange={(value) => setCommentInputs((prev: Record<string, string>) => ({ ...prev, [post._id]: value }))}
+            onReplyInputChange={(commentId: string, value: string) => setReplyInputs((prev: Record<string, string>) => ({ ...prev, [commentId]: value }))}
+            onMentionedUsersChange={(key: string, users: string[]) => setMentionedUsers((prev: Record<string, string[]>) => ({ ...prev, [key]: users }))}
             onFollow={(userId, isFollowing) => handleFollow(userId, isFollowing)}
             onProfileClick={onProfileClick}
             getPostTypeStyle={getPostTypeStyle}
             getPostTypeIcon={getPostTypeIcon}
             renderContentWithMentions={(content) => renderContentWithMentions(content, post._id)}
+            onImageClick={() => {
+              setIndex(idx);
+              setOpen(true);
+            }}
           />
         ))
       )}
+      <Lightbox
+        open={open}
+        close={() => setOpen(false)}
+        slides={posts.filter(p => p.postPhotoUrl).map(p => ({ src: p.postPhotoUrl! }))}
+        index={index}
+      />
     </div>
   );
 }
@@ -229,6 +244,7 @@ interface PostItemProps {
   getPostTypeStyle: (type: string) => string;
   getPostTypeIcon: (type: string) => string;
   renderContentWithMentions: (content: string) => React.ReactNode;
+  onImageClick: () => void;
 }
 
 function PostItem({
@@ -252,6 +268,7 @@ function PostItem({
   getPostTypeStyle,
   getPostTypeIcon,
   renderContentWithMentions,
+  onImageClick,
 }: PostItemProps) {
   const comments = useQuery(api.posts.getPostComments, { postId: post._id });
 
@@ -266,6 +283,7 @@ function PostItem({
             displayName={post.author}
             size="md"
             onClick={onProfileClick}
+            onView={onImageClick}
           />
           <div>
             <button 
@@ -300,11 +318,11 @@ function PostItem({
 
       {/* Post Photo */}
       {post.postPhotoUrl && (
-        <div className="mb-4">
+        <div className="mb-4 cursor-pointer" onClick={onImageClick}>
           <img
             src={post.postPhotoUrl}
             alt="Post image"
-            className="w-full max-h-96 object-cover rounded-lg"
+            className="w-full max-h-96 object-contain rounded-lg"
           />
         </div>
       )}
@@ -368,6 +386,7 @@ function PostItem({
                       displayName={comment.author}
                       size="sm"
                       onClick={onProfileClick}
+                      onView={onImageClick}
                     />
                     <div className="flex-1 bg-white/10 rounded-lg p-3">
                       <div className="flex items-center justify-between mb-1">
@@ -417,6 +436,7 @@ function PostItem({
                             displayName={reply.author}
                             size="sm"
                             onClick={onProfileClick}
+                            onView={onImageClick}
                           />
                           <div className="flex-1 bg-white/5 rounded-lg p-2">
                             <div className="flex items-center space-x-2 mb-1">

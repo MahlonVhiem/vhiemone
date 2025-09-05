@@ -1,9 +1,14 @@
+import { useState } from 'react';
+import Lightbox from 'yet-another-react-lightbox';
+import 'yet-another-react-lightbox/styles.css';
+
 interface ClickableProfilePictureProps {
   userId?: string;
   profilePhotoUrl?: string | null;
   displayName: string;
   size?: "sm" | "md" | "lg" | "xl";
   onClick?: (userId: string) => void;
+  onView?: (url: string) => void;
   className?: string;
 }
 
@@ -13,8 +18,11 @@ export function ClickableProfilePicture({
   displayName, 
   size = "md", 
   onClick,
+  onView,
   className = ""
 }: ClickableProfilePictureProps) {
+  const [open, setOpen] = useState(false);
+
   const sizeClasses = {
     sm: "w-8 h-8 text-sm",
     md: "w-10 h-10 text-base",
@@ -24,6 +32,12 @@ export function ClickableProfilePicture({
 
   const baseClasses = `bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center overflow-hidden ${sizeClasses[size]} ${className}`;
   
+  const handleView = () => {
+    if (profilePhotoUrl) {
+      setOpen(true);
+    }
+  };
+
   if (userId && onClick) {
     return (
       <button 
@@ -32,11 +46,13 @@ export function ClickableProfilePicture({
         title={`View ${displayName}'s profile`}
       >
         {profilePhotoUrl ? (
-          <img 
-            src={profilePhotoUrl} 
-            alt={displayName}
-            className="w-full h-full object-cover"
-          />
+          <div onClick={(e) => { e.stopPropagation(); handleView(); }}>
+              <img 
+                src={profilePhotoUrl}
+                alt={displayName}
+                className="w-full h-full object-cover"
+              />
+          </div>
         ) : (
           <span className="text-black font-bold">
             {displayName.charAt(0).toUpperCase()}
@@ -49,16 +65,23 @@ export function ClickableProfilePicture({
   return (
     <div className={baseClasses}>
       {profilePhotoUrl ? (
-        <img 
-          src={profilePhotoUrl} 
-          alt={displayName}
-          className="w-full h-full object-cover"
-        />
+        <div onClick={handleView}>
+          <img 
+            src={profilePhotoUrl} 
+            alt={displayName}
+            className="w-full h-full object-cover"
+          />
+        </div>
       ) : (
         <span className="text-black font-bold">
           {displayName.charAt(0).toUpperCase()}
         </span>
       )}
+      <Lightbox
+        open={open}
+        close={() => setOpen(false)}
+        slides={profilePhotoUrl ? [{ src: profilePhotoUrl }] : []}
+      />
     </div>
   );
 }

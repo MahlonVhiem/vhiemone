@@ -11,7 +11,7 @@ import { ProfileView } from "./ProfileView";
 import { ProfileEdit } from "./ProfileEdit";
 import { ProfilePhotoUpload } from "./ProfilePhotoUpload";
 import { ClickableProfilePicture } from "./ClickableProfilePicture";
-import { VoiceChatRoomPage } from "./VoiceChatRoomPage";
+
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState<"feed" | "create" | "voice" | "stats" | "leaderboard" | "people">("feed");
@@ -19,6 +19,14 @@ export function Dashboard() {
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const userProfile = useQuery(api.users.getUserProfile);
   const navigate = useNavigate();
+
+  const handleTabClick = (tabId: "feed" | "create" | "voice" | "stats" | "leaderboard" | "people") => {
+    if (tabId === "voice") {
+      navigate("/voice-chat");
+    } else {
+      setActiveTab(tabId);
+    }
+  };
 
   const tabs = [
     { id: "feed" as const, label: "Feed", icon: "🏠" },
@@ -82,7 +90,7 @@ export function Dashboard() {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabClick(tab.id)}
               className={`w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl transition-all duration-300 ${
                 activeTab === tab.id
                   ? "bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold"
