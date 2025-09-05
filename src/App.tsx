@@ -13,11 +13,12 @@ import {
 } from "@clerk/clerk-react";
 import { Header } from "./components/Header";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { VoiceChatRoomPage } from "./components/VoiceChatRoomPage";
 
 export default function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-orange-500">
+      <div className="min-h-screen bg-gradient-to-br from-[#012169] via-[#1a327a] via-teal-500 via-orange-500 to-yellow-400">
         <div className="min-h-screen bg-black/20 backdrop-blur-sm">
           <Header />
           <main className="container mx-auto px-4 py-8">
@@ -26,11 +27,11 @@ export default function App() {
               <Route path="/" element={<LandingPage />} />
 
               <Route
-                path="/signin"
+                path="/signin/*"
                 element={
                   <SignedOut>
                     <div className="flex justify-center">
-                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 max-w-md w-full">
+                      <div className="bg-white/10 bg-opacity-50 rounded-2xl p-4 border border-white/20 w-full">
                         <SignIn
                           routing="path"
                           path="/signin"
@@ -44,11 +45,11 @@ export default function App() {
               />
 
               <Route
-                path="/signup"
+                path="/signup/*"
                 element={
                   <SignedOut>
                     <div className="flex justify-center">
-                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 max-w-md w-full">
+                      <div className="bg-white/10 bg-opacity-50 rounded-2xl p-4 border border-white/20 w-full">
                         <SignUp
                           routing="path"
                           path="/signup"
@@ -80,9 +81,18 @@ export default function App() {
                 }
               />
 
+              <Route
+                path="/voice-chat"
+                element={
+                  <ProtectedRoute>
+                    <VoiceChatRoomPage />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* Redirect authenticated users from public routes */}
               <Route
-                path="/signin"
+                path="/signin/*"
                 element={
                   <SignedIn>
                     <Navigate to="/dashboard" replace />
@@ -91,7 +101,7 @@ export default function App() {
               />
 
               <Route
-                path="/signup"
+                path="/signup/*"
                 element={
                   <SignedIn>
                     <Navigate to="/dashboard" replace />
