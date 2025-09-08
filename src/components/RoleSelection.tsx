@@ -8,7 +8,7 @@ interface RoleSelectionProps {
   preSelectedRole?: "shopper" | "business" | "delivery_driver";
 }
 
-export function RoleSelection() {
+export function RoleSelection({ preSelectedRole }: RoleSelectionProps) {
   const [selectedRole, setSelectedRole] = useState<"shopper" | "business" | "delivery_driver" | null>(preSelectedRole || null);
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");

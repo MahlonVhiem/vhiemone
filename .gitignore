@@ -5,3 +5,4 @@ node_modules/
 private_key.pem
 private_key_pkcs8.pem
 public_key.pem
+dist/

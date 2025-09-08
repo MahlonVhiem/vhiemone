@@ -8,8 +8,7 @@ import App from "./App";
 const convexUrl = import.meta.env.VITE_CONVEX_URL;
 const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-console.log('VITE_CONVEX_URL:', convexUrl);
-console.log('VITE_CLERK_PUBLISHABLE_KEY:', clerkPublishableKey);
+
 
 if (!convexUrl) {
   throw new Error(
